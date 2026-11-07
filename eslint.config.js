@@ -2,7 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import js from "@eslint/js";
 
 export default defineConfig([
-  globalIgnores(["**/dist/", "**/node_modules/", "**/generated/"]),
+  globalIgnores(["**/dist/", "**/node_modules/", "**/generated/", ".deployment/", ".npm-cache/"]),
   js.configs.recommended,
   {
     // Dev/verification scripts run directly under Node, in any workspace.

@@ -1,0 +1,118 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { doctorSearchApi } from "../api/appointments";
+import SymptomChecker from "../components/ai/SymptomChecker";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Skeleton } from "../components/primitives/Skeleton";
+import { EmptyState } from "../components/primitives/EmptyState";
+import { FavouriteToggle } from "../components/doctors/FavouriteToggle";
+import { MessageDoctorButton } from "../components/chat/MessageDoctorButton";
+
+export default function DoctorSearch() {
+  const { t } = useTranslation(["common", "nav", "doctors"]);
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  // Seeded so the page lists doctors on first load rather than showing a false
+  // "no doctors found" empty state before anyone has typed anything.
+  const [filters, setFilters] = useState<Record<string, string | number>>({
+    page: 1,
+    limit: 20,
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["doctors", "search", filters],
+    queryFn: () => doctorSearchApi.search(filters),
+  });
+
+  const doctors = data?.data ?? data ?? [];
+
+  const handleSearch = () => {
+    setFilters({ search, page: 1, limit: 20 });
+  };
+
+  // The symptom checker accepts a suggestion by prefilling the department filter.
+  const applyDepartment = (departmentId: string) => {
+    if (!departmentId) return;
+    setFilters((f) => ({ ...f, departmentId, page: 1, search: "" }));
+    setSearch("");
+  };
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">{t("nav:findDoctor")}</h1>
+
+      <SymptomChecker onMatchDepartment={applyDepartment} />
+
+      <div className="flex gap-2">
+        <Input
+          placeholder={t("doctors:searchPlaceholder")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        />
+        <Button onClick={handleSearch}>{t("common:search")}</Button>
+      </div>
+
+      {filters.departmentId && (
+        <button
+          className="text-sm text-teal-600 hover:underline"
+          onClick={() => {
+            const { departmentId: _drop, ...rest } = filters;
+            setFilters(rest);
+          }}
+        >
+          {t("doctors:clearDepartmentFilter")}
+        </button>
+      )}
+
+      {isLoading && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && doctors.length === 0 && (
+        <EmptyState title={t("doctors:empty")} description={t("doctors:emptyHint")} />
+      )}
+
+      {!isLoading && doctors.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {doctors.map((doc: any) => (
+            <Card
+              key={doc.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => navigate(`/doctors/${doc.id}`)}
+            >
+              <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <CardTitle className="text-lg">{doc.fullName}</CardTitle>
+                <FavouriteToggle doctorId={doc.id} />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm text-muted-foreground">{doc.bio}</p>
+                <div className="flex flex-wrap gap-1">
+                  {doc.departments?.map((dd: any) => (
+                    <Badge key={dd.department.id} variant="secondary">
+                      {dd.department.name}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-sm">
+                  {t("doctors:fee", { amount: Number(doc.consultationFee).toFixed(2) })} &middot;{" "}
+                  {t("doctors:yearsExp", { years: doc.experienceYears })}
+                </p>
+                <MessageDoctorButton doctorId={doc.id} />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

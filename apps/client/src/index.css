@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Geist Variable", sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #312e81;
+  --muted: #f6f7f9;
+  --muted-foreground: #5b6472;
+  --accent: #e0f2fe;
+  --accent-foreground: #075985;
+  --destructive: #dc2626;
+  --border: #e2e9e8;
+  --input: #e2e9e8;
+  --ring: #0d9488;
+  --chart-1: #0f766e;
+  --chart-2: #2563eb;
+  --chart-3: #f59e0b;
+  --chart-4: #db2777;
+  --chart-5: #16a34a;
+  --radius: 0.5rem;
+  --sidebar: #fbfdfd;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e0f2fe;
+  --sidebar-accent-foreground: #075985;
+  --sidebar-border: #e2e9e8;
+  --sidebar-ring: #0d9488;
+}
+
+.dark {
+  --background: #161a19;
+  --foreground: #edf2f1;
+  --card: #1f2624;
+  --card-foreground: #edf2f1;
+  --popover: #1f2624;
+  --popover-foreground: #edf2f1;
+  --primary: #5eead4;
+  --primary-foreground: #134e4a;
+  --secondary: #252a44;
+  --secondary-foreground: #edf2f1;
+  --muted: #242c2b;
+  --muted-foreground: #9aa8a6;
+  --accent: #123047;
+  --accent-foreground: #bae6fd;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #2dd4bf;
+  --chart-1: #5eead4;
+  --chart-2: #60a5fa;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #4ade80;
+  --sidebar: #1a201f;
+  --sidebar-foreground: #e8f2f0;
+  --sidebar-primary: #5eead4;
+  --sidebar-primary-foreground: #134e4a;
+  --sidebar-accent: #123047;
+  --sidebar-accent-foreground: #bae6fd;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #2dd4bf;
+}
+
+/* ── Data-visualisation palette ───────────────────────────────────────
+   Categorical series slots, assigned in fixed order and never cycled. The
+   dark column is the same eight hues re-stepped for the dark card surface,
+   not an automatic flip. Both sets are validated (lightness band, chroma
+   floor, adjacent CVD separation, normal-vision floor, contrast) against
+   this app's actual surfaces — light #ffffff, dark oklch(0.205 0 0).
+
+   Three light slots and one dark slot sit below 3:1 on their surface, so
+   every chart using them ships the relief the palette requires: a legend,
+   direct labels, and the table/CSV view on AdminAnalytics.
+
+   Status colours are reserved for state and never reused as a series. */
+:root {
+  --viz-series-1: #2a78d6;
+  --viz-series-2: #eb6834;
+  --viz-series-3: #1baf7a;
+  --viz-series-4: #eda100;
+  --viz-series-5: #e87ba4;
+  --viz-series-6: #008300;
+  --viz-series-7: #4a3aa7;
+  --viz-series-8: #e34948;
+
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+  --viz-muted: #898781;
+
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+}
+
+.dark {
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-series-3: #199e70;
+  --viz-series-4: #c98500;
+  --viz-series-5: #d55181;
+  --viz-series-6: #008300;
+  --viz-series-7: #9085e9;
+  --viz-series-8: #e66767;
+
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+  --viz-muted: #898781;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+/* ── Print (Phase 6.7) ─────────────────────────────────────────────────
+   Prescriptions, lab reports, invoices and receipts are handed to patients
+   and filed by the hospital, so they must print as documents, not as
+   screenshots of an app.
+
+   Mark the printable region with `data-print-region` and any element that
+   should not reach paper with `data-no-print`. */
+@media print {
+  /* Force the light palette: a dark-mode screen prints as a solid black page. */
+  :root,
+  .dark {
+    --background: #ffffff;
+    --foreground: #000000;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* App chrome carries no information on paper. */
+  nav,
+  aside,
+  header,
+  [data-no-print],
+  [role="dialog"],
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  [data-print-region] {
+    position: static;
+    width: 100%;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  /* Tables are the substance of a lab report — never split a row across pages. */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  tr,
+  img,
+  figure {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* A link that reads "click here" is useless on paper; show the target. */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+}
+
+/* A visible focus ring on every interactive element, in both themes.
+   `:focus-visible` keeps it off mouse clicks but always on for keyboard. */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}

@@ -1,0 +1,35 @@
+node_modules/
+.env
+dist/
+coverage/
+*.tsbuildinfo
+*.stackdump
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Agent tooling — local only, deliberately not tracked
+.claude
+.opencode
+CLAUDE.md
+docs/*
+!docs/architecture/
+docs/architecture/*
+!docs/architecture/security.md
+
+nul
+.vercel
+.env*
+!.env.example
+.npm-cache/
+.deployment/

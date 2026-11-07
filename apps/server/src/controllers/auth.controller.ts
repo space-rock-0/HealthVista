@@ -1,0 +1,215 @@
+import { Request, Response, NextFunction } from "express";
+import * as authService from "../services/auth.service.js";
+import { sendSuccess } from "../utils/apiResponse.js";
+import { AppError } from "../utils/AppError.js";
+import { env } from "../config/env.js";
+import { handleGoogleCallback, type GoogleProfileInput } from "../services/oauth.service.js";
+
+export async function register(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await authService.register(req.validated);
+    sendSuccess(res, result, 201, "Registration successful. Verify your email.");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function login(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ip = req.ip || req.socket.remoteAddress;
+    const result = await authService.login(req.validated, ip);
+
+    const isSecure = req.secure || env.NODE_ENV === "production";
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: isSecure ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
+    });
+
+    sendSuccess(res, {
+      accessToken: result.accessToken,
+      user: result.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function refresh(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!token) {
+      throw new AppError("Refresh token required", 401);
+    }
+    const result = await authService.refresh(token);
+
+    const isSecure = req.secure || env.NODE_ENV === "production";
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: isSecure ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
+    });
+
+    sendSuccess(res, {
+      accessToken: result.accessToken,
+      user: result.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function logout(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.logout(req.user!.userId, req.user!.sessionId!);
+    res.clearCookie("refreshToken", { path: "/api/auth" });
+    sendSuccess(res, null, 200, "Logged out");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function logoutAll(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.logoutAll(req.user!.userId);
+    res.clearCookie("refreshToken", { path: "/api/auth" });
+    sendSuccess(res, null, 200, "Logged out from all devices");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await authService.getMe(req.user!.userId);
+    sendSuccess(res, user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.verifyEmail(req.validated.token);
+    sendSuccess(res, null, 200, "Email verified");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changePassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.changePassword(
+      req.user!.userId,
+      req.validated.currentPassword,
+      req.validated.newPassword,
+    );
+    sendSuccess(res, null, 200, "Password changed");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getSessions(req: Request, res: Response, next: NextFunction) {
+  try {
+    const sessions = await authService.getSessions(req.user!.userId);
+    sendSuccess(res, sessions);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function revokeSession(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.revokeSession(req.user!.userId, req.params.id as string);
+    sendSuccess(res, null, 200, "Session revoked");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resendVerification(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await authService.resendVerification(req.validated.email);
+    sendSuccess(res, result, 200, "Verification email sent");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changeEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.changeEmail(req.user!.userId, req.validated.newEmail, req.validated.password);
+    sendSuccess(res, null, 200, "Email changed. Please verify your new email.");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changePhone(req: Request, res: Response, next: NextFunction) {
+  try {
+    await authService.changePhone(req.user!.userId, req.validated.newPhone, req.validated.password);
+    sendSuccess(res, null, 200, "Phone number changed");
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await authService.updateProfile(req.user!.userId, req.validated);
+    sendSuccess(res, user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Google OAuth callback (Phase 6.6).
+ *
+ * Passport has verified the Google identity; `handleGoogleCallback` decides
+ * whether this account may use it at all. On success the tokens go back to the
+ * SPA through a fragment (`#`) rather than a query string, so they are not
+ * written to server logs, the Referer header, or browser history in the way a
+ * `?token=` would be.
+ */
+export async function googleCallback(req: Request, res: Response, next: NextFunction) {
+  try {
+    const profile = req.user as unknown as GoogleProfileInput;
+    const result = await handleGoogleCallback(profile, req.ip);
+
+    // Same refresh cookie as password login. Without it, `POST /auth/refresh`
+    // (which the client interceptor relies on once the access token expires)
+    // has no token to work with and an OAuth session dies after 15 minutes.
+    const isSecure = req.secure || env.NODE_ENV === "production";
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: isSecure ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
+    });
+
+    const params = new URLSearchParams({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
+    res.redirect(`${env.CLIENT_URL}/oauth/callback#${params.toString()}`);
+  } catch (err) {
+    if (err instanceof AppError) {
+      // A rejection is a normal outcome here (a staff email, an unverified
+      // address), so send the user back to the login screen with a reason
+      // rather than rendering a JSON error page mid-redirect.
+      const reason = encodeURIComponent(err.message);
+      res.redirect(`${env.CLIENT_URL}/login?error=${reason}`);
+      return;
+    }
+    next(err);
+  }
+}

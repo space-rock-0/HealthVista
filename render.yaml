@@ -5,11 +5,10 @@ services:
     name: healthvista-api
     runtime: node
     region: singapore
-    plan: 0.5c-512mb
+    plan: free
     branch: main
     buildCommand: npm ci && npm run build -w packages/shared && npm run build -w apps/server
-    preDeployCommand: npm run db:deploy
-    startCommand: npm run start -w apps/server
+    startCommand: npm run db:deploy && exec node apps/server/dist/server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION

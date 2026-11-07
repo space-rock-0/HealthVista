@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "rootDir": "./src",
+    "outDir": "dist",
+    "allowJs": true,
+    // Windows and macOS resolve paths case-insensitively; Linux (CI, Vercel, Render)
+    // does not. With this off, `../UI/dialog` typechecked here and failed the Vercel
+    // build. Leave it on.
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "src/**/*.jsx"]
+}

@@ -1,0 +1,234 @@
+# HealVista — PERN + AI Hospital Management System
+
+A production-oriented Hospital Management System built on the **PERN** stack
+(**P**ostgreSQL, **E**xpress, **R**eact, **N**ode) with an **AI** layer: front desk, clinical records,
+pharmacy, laboratory, billing, and a Jina AI + pgvector RAG over patient data.
+
+Seven roles, seven dashboards, one system: a patient books an appointment and pays online, a
+receptionist checks them in and takes the cash, a doctor writes a SOAP note and drafts it with AI,
+the pharmacist dispenses with allergy and interaction safety checks, the lab verifies results, the
+accountant refunds a card payment, and the admin watches no-show rates and revenue by department.
+
+## Stack
+
+| Layer        | Technology                                                                    |
+| ------------ | ----------------------------------------------------------------------------- |
+| Frontend     | React 19 + Vite, TypeScript, Tailwind v4 + shadcn/ui, TanStack Query, Zustand |
+| Backend      | Node 20 + Express 5, TypeScript, Prisma                                       |
+| Database     | PostgreSQL (Neon) + pgvector                                                  |
+| Cache/Queues | Redis (Upstash / Docker) + BullMQ                                             |
+| AI           | Jina AI + pgvector RAG                                                        |
+| Payments     | Stripe (card), plus cash                                                      |
+| Comms        | Twilio SMS, Socket.io, in-app notifications                                   |
+
+**PERN + AI**: PostgreSQL · Express · React · Node · Jina AI RAG
+
+## Features
+
+**Phase 1 — Foundation & Identity**
+
+- 7 roles with a JWT access/refresh flow and account lockout
+- Departments, staff management, patient registration (walk-in + self-serve)
+- Admin verification for new doctors
+
+**Phase 2 — Scheduling & Front Desk**
+
+- Doctor slot generation, booking, rescheduling, cancellation
+- QR check-in at the front desk, queue tokens, live waiting-room display
+- Walk-in registration by the receptionist
+
+**Phase 3 — Billing & Communications**
+
+- Consolidated bills (consultation + lab + pharmacy), drafts, finalisation with tax
+- Discounts (percentage/fixed) with a **live total preview** before applying; one per bill
+- Partial payments — cash by reception, card online via Stripe Elements; automatic status transitions
+- Refunds (full/partial) that go back through the payment gateway; printable receipts
+- Notifications fanning out to in-app + SMS with per-user preferences
+- 24h/1h reminders and doctor-set follow-up reminders via BullMQ
+
+**Phase 4 — Clinical Core**
+
+- SOAP notes with templates, auto-save, and AI draft assist
+- Prescriptions with deterministic allergy and drug-interaction safety checks
+- Pharmacy: inventory, low-stock, batch/expiry management
+- Laboratory: sample workflow, barcode tracking, pathologist verification, critical-flagging
+- Vitals, referrals, dependant profiles, full medical history
+
+**Phase 5 — AI & Semantic Layer**
+
+- Jina AI behind an `AIProvider` interface; PII stripped before every external call
+- pgvector embeddings + HNSW; retrieval scoped by permission **in the SQL itself**
+- Patient/doctor assistants, report/lab/prescription explainers, SOAP drafts
+- Hospital knowledge base, analytics assistant (the model narrates, never authors SQL)
+- Deterministic safety rails: emergency detection, allergy/interaction warnings
+
+**Phase 6 — Analytics, Admin & Hardening**
+
+- Role dashboards with live KPIs (60s Redis cache)
+- Operational analytics: no-show rate, waiting times, doctor utilisation, revenue by department
+- Global search (Postgres `tsvector` + GIN) filtered by the caller's role; `Cmd+K` palette
+- Audit & compliance: append-only audit log, per-patient activity timeline, async export, anonymised delete
+- Google OAuth for patients (staff accounts rejected server-side)
+- WCAG 2.1 AA (axe-tested flows), dark mode, i18n English + Urdu (RTL), print stylesheets
+- Helmet CSP, Redis rate limits, structured logging, route-level code splitting
+
+## Getting started
+
+```bash
+# 1. Start local infrastructure (Postgres + pgvector, Redis)
+docker compose up -d
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp apps/server/.env.example apps/server/.env
+cp apps/client/.env.example apps/client/.env
+# Fill in DATABASE_URL, JWT secrets, JINA_API_KEY (https://jina.ai), etc.
+
+# 4. Run database migration, seed, and backfill AI embeddings
+npm run db:migrate
+npm run db:seed
+npm run db:embed
+
+# 5. Start both apps in dev mode
+npm run dev
+```
+
+- Client: http://localhost:5173
+- Server: http://localhost:5000
+- API docs: http://localhost:5000/api/docs
+
+Setup guides live in `docs/setup/` (Neon Postgres, Upstash Redis, payments, local development).
+
+## Production payments checklist
+
+Stripe card payments need both sides configured:
+
+| App | Variable | Purpose |
+| --- | --- | --- |
+| Client | `VITE_STRIPE_PUBLISHABLE_KEY` | Builds Stripe Elements into the production frontend. If this is missing when Vite builds, the app hides/disables card checkout. |
+| Server | `STRIPE_SECRET_KEY` | Creates PaymentIntents and refunds. |
+| Server | `STRIPE_WEBHOOK_SECRET` | Verifies Stripe webhook signatures before settling pending card payments. |
+
+Production webhook endpoint:
+
+```text
+https://<api-domain>/api/payments/webhook/stripe
+```
+
+Required Stripe events:
+
+- `payment_intent.succeeded`
+- `payment_intent.payment_failed`
+- `charge.refunded`
+
+Common production failure causes:
+
+- The frontend was deployed without `VITE_STRIPE_PUBLISHABLE_KEY`; Vite only exposes variables prefixed with `VITE_`, and they are baked in at build time.
+- The client points `VITE_API_URL` at the wrong API origin, so `/payments/create-intent` never reaches the production server.
+- The server has `STRIPE_SECRET_KEY` but not `STRIPE_WEBHOOK_SECRET`; checkout can open, but the bill stays pending/due because the webhook cannot be verified.
+- The webhook URL in Stripe Dashboard points at the frontend domain instead of the API domain.
+- Test keys and live keys are mixed. Use all test keys together or all live keys together.
+
+Card payment flow is intentionally server-truthful: creating a PaymentIntent records a `PENDING`
+payment, and only a verified Stripe webhook promotes it to `SUCCEEDED` and updates the bill balance.
+The UI invalidates billing/payment caches immediately after Stripe confirmation so the screen refreshes
+as soon as the webhook/database round trip completes.
+
+## Project structure
+
+```
+apps/client/        React frontend (Vite)
+apps/server/        Express API + BullMQ workers
+packages/shared/    Zod schemas, types, constants
+docs/               Architecture, setup, roadmap, phase reports
+```
+
+## Available commands
+
+| Command              | Description                          |
+| -------------------- | ------------------------------------ |
+| `npm run dev`        | Start both apps                      |
+| `npm run dev:client` | Vite dev server on :5173             |
+| `npm run dev:server` | Express dev server on :5000          |
+| `npm run worker`     | BullMQ workers                       |
+| `npm run build`      | Build all packages                   |
+| `npm run typecheck`  | TypeScript check across all packages |
+| `npm run lint`       | ESLint across all packages           |
+| `npm run test`       | Run all tests (Vitest)               |
+| `npm run db:migrate` | Prisma migrate dev                   |
+| `npm run db:seed`    | Seed demo data                       |
+| `npm run db:embed`   | Backfill pgvector embeddings         |
+| `npm run db:studio`  | Prisma Studio                        |
+
+## Architecture rules
+
+- **Backend**: Routes → Controller → Service → Prisma. Never skip or invert.
+- **Frontend**: TanStack Query for server state, Zustand for client state. No `useEffect` fetching.
+- **AI**: Jina AI behind `AIProvider` interface. RAG with pgvector. Permissions filtered **before** retrieval.
+- **Database**: Soft deletes (`deletedAt`), audit logs for every clinical/financial write.
+
+See `docs/architecture/` for details.
+
+## Redis on the free tier — quota, eviction, and the kill switch
+
+Redis (Upstash in production, Docker locally) is a **performance layer, never a store of record** —
+everything cached in it is derived data whose source of truth is Postgres. That design decision is
+what makes the two sections below safe.
+
+### Eviction policy
+
+The Upstash free tier ships with `optimistic-volatile` eviction, not `noeviction`. Under memory
+pressure keys can be dropped — which is exactly why every cached aggregate, chat message, and session
+marker keeps Postgres as its source of truth. The policy is a property of the Upstash plan and cannot
+be changed over the wire; it is not a bug to fix in code. Local Docker Redis in `docker-compose.yml`
+runs with `allkeys-lru` + a `maxmemory` cap so a long-lived dev box evicts stale cache instead of
+filling up.
+
+### Monthly command quota (500,000) and `REDIS_ENABLED=false`
+
+Upstash's free tier allows **500,000 commands per month**. When that is used up, every command is
+rejected — and an app that keeps issuing them just pays the latency of a failing round trip on every
+request. The fix is the **kill switch** in `apps/server/.env`:
+
+```
+REDIS_ENABLED=false
+```
+
+With it set, the server opens **zero** Redis connections and every helper fails open. What degrades,
+and why none of it loses data:
+
+| Feature               | While Redis is off                                                         |
+| --------------------- | -------------------------------------------------------------------------- |
+| Caching               | Every read falls through to Postgres — slower, never wrong                 |
+| Session revocation    | Read from Postgres (the source of truth) — still enforced                  |
+| Slot locks            | Fall back to the DB unique constraint, which is the real guarantee         |
+| BullMQ queues/workers | Do not start; reminders pause and `npm run db:embed` catches up embeddings |
+| Socket.io             | In-memory adapter — correct on this single-instance deployment             |
+
+Set `REDIS_ENABLED=false` the moment you see the 500k quota warning, keep the app fully functional
+on Postgres, and turn it back on when the month resets. The app logs a clear warning at boot when
+Redis is off.
+
+## Slow reads and optimistic UI
+
+When Redis is full or switched off, reads fall through to Postgres. That is correct, but it can feel
+slower on free-tier infrastructure. The client is tuned to keep the interface responsive:
+
+- TanStack Query keeps the last successful payload visible while a refetch is in flight.
+- Billing mutations optimistically update visible bill cards for finalising and cash payments.
+- Failed mutations roll back to the previous cache snapshot.
+- Successful Stripe confirmation invalidates bill and payment queries immediately; final settlement
+  still waits for the verified webhook.
+
+This improves perceived speed without making Redis a source of truth and without pretending a Stripe
+payment is settled before the webhook confirms it.
+
+## Roles
+
+`PATIENT` · `DOCTOR` · `RECEPTIONIST` · `PHARMACIST` · `LAB_TECHNICIAN` · `ACCOUNTANT` · `ADMIN`
+
+## Deployment
+
+See `docs/setup/` for Neon, Upstash, and deployment guides.

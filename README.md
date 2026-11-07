@@ -156,10 +156,16 @@ Cloudinary uploads, Jina features and Twilio SMS use server-side credentials.
 Never put secret keys in `VITE_*` variables: those values become public browser code.
 Rebuild the frontend after changing its environment variables.
 
+Jina embeddings and chat use separate API hosts. The application sends embeddings
+to `api.jina.ai` and `jina-vlm` generation to `api-beta-vlm.jina.ai`, using the same
+server-side `JINA_API_KEY`. The knowledge assistant also needs indexed, published
+articles; importing database records does not run the embedding backfill. The eight
+deployed knowledge-base articles have been indexed.
+
 ## Validation and current limits
 
 Deployment validation passed TypeScript checks, lint, the production build,
-**289 server tests** and **33 client tests**. Live API checks verified registration,
+**292 server tests** and **33 client tests**. Live API checks verified registration,
 password login, refresh cookies, profile access, Socket.io, administrator screens,
 and migrated doctor/patient dashboards. Stripe webhook signature and duplicate
 handling checks passed.

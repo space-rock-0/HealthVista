@@ -6,14 +6,14 @@ import type { AIProvider, AiUsage, GenerationImage } from "./ai.provider.js";
 /**
  * The Jina implementation of `AIProvider`.
  *
- * This is the **only** file that talks to `api.jina.ai`. Everything above the
+ * This is the **only** file that talks to Jina's model APIs. Everything above the
  * interface stays SDK-free and therefore provider-agnostic.
  *
  * - Embeddings use `jina-embeddings-v5-text-small` (1024-dim, within the
  *   pgvector HNSW 2000-dim ceiling). `task: "retrieval.query"` and
  *   `normalized: true` keep stored and queried vectors comparable.
- * - Generation uses `jina-vlm`. Jina rejects a `system` role (conversation
- *   roles must alternate), so the system prompt is merged into the user turn.
+ * - Generation uses `jina-vlm` on its separate VLM endpoint. Conversation roles
+ *   must alternate, so the system prompt is merged into the user turn.
  *   `response_format: json_object` is set, and any markdown code fence the
  *   model wraps its JSON in is stripped before `JSON.parse`.
  * - The provider is created lazily and only when configured — a missing key
@@ -21,6 +21,9 @@ import type { AIProvider, AiUsage, GenerationImage } from "./ai.provider.js";
  */
 
 const JINA_BASE = "https://api.jina.ai/v1";
+// The Search Foundation host serves embeddings and OCR, not jina-vlm chat.
+// https://jina.ai/news/jina-vlm-small-multilingual-vision-language-model/
+const JINA_CHAT_BASE = "https://api-beta-vlm.jina.ai/v1";
 
 function getApiKey(): string {
   if (!env.JINA_API_KEY) {
@@ -86,6 +89,7 @@ class JinaProvider implements AIProvider {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: `Bearer ${getApiKey()}`,
         },
         body: JSON.stringify({
@@ -119,8 +123,8 @@ class JinaProvider implements AIProvider {
     const start = Date.now();
 
     const systemText = opts.system
-      ? `${opts.system}\n\nYou must return ONLY a JSON object, no prose, no code fences.`
-      : "You must return ONLY a JSON object, no prose, no code fences.";
+      ? `${opts.system}\n\nReturn the JSON object itself. Do not write a program, Python, JavaScript, markdown, or a code fence.`
+      : "Return the JSON object itself. Do not write a program, Python, JavaScript, markdown, or a code fence.";
     const shapeHint = JSON.stringify(zodShapeHint(opts.schema));
 
     const textPrompt = `${systemText}\n\nExpected JSON shape (follow it exactly):\n${shapeHint}\n\n${opts.prompt}`;
@@ -140,16 +144,18 @@ class JinaProvider implements AIProvider {
 
     let res: Response;
     try {
-      res = await fetch(`${JINA_BASE}/chat/completions`, {
+      res = await fetch(`${JINA_CHAT_BASE}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: `Bearer ${getApiKey()}`,
         },
         body: JSON.stringify({
           model: env.JINA_CHAT_MODEL,
           messages: [{ role: "user", content }],
           response_format: { type: "json_object" },
+          temperature: 0,
           max_tokens: opts.maxTokens ?? 1024,
         }),
       });

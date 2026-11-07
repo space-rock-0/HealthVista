@@ -1,0 +1,34 @@
+# Preparation only: upload application source and supply private settings before applying.
+# See DEPLOYMENT.md for existing cloud resources and integration URLs.
+services:
+  - type: web
+    name: healthvista-api
+    runtime: node
+    region: singapore
+    plan: 0.5c-512mb
+    branch: main
+    buildCommand: npm ci && npm run build -w packages/shared && npm run build -w apps/server
+    preDeployCommand: npm run db:deploy
+    startCommand: npm run start -w apps/server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_ENABLED
+        value: "true"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+# Optional provider credentials must be installed privately in Render after creation.
+# This Blueprint has not yet been validated using Render CLI or the Render API.

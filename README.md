@@ -160,7 +160,7 @@ Jina embeddings and chat use separate API hosts. The application sends embedding
 to `api.jina.ai` and `jina-vlm` generation to `api-beta-vlm.jina.ai`, using the same
 server-side `JINA_API_KEY`. The knowledge assistant also needs indexed, published
 articles; importing database records does not run the embedding backfill. The eight
-deployed knowledge-base articles have been indexed.
+deployed knowledge-base articles and 106 eligible patient records have been indexed.
 
 ## Validation and current limits
 

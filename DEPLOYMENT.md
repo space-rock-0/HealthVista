@@ -6,18 +6,18 @@ The frontend and API are deployed. Application source was imported without
 overwriting the deployment preparation history. Local secrets, dependencies,
 build output and deployment tooling remain excluded from Git.
 
-| Component | Resource |
-| --- | --- |
-| Frontend | https://healthvista-vault-cf00.vercel.app |
-| Additional frontend alias | https://healthvista-gamma.vercel.app |
-| API | https://healthvista-api.onrender.com |
-| API health | https://healthvista-api.onrender.com/api/health |
-| GitHub | https://github.com/space-rock-0/HealthVista, main |
-| Vercel | healthvista, Vault, prj_gAQXibTKHzJfgPypDDAY0GJ9cJgS |
-| Render | healthvista-api, srv-dbnmsu95efls73bprpvg, Singapore |
-| Render workspace | siddhartha's workspace, tea-dasl1ubncjis73akdhrg |
-| Neon | healthvista, wild-firefly-68831535, branch br-blue-tooth-b3v6k65c |
-| Upstash Redis | healthvista, 947da247-33ac-42d0-8b2f-90dcd1d389f2 |
+| Component                 | Resource                                                          |
+| ------------------------- | ----------------------------------------------------------------- |
+| Frontend                  | https://healthvista-vault-cf00.vercel.app                         |
+| Additional frontend alias | https://healthvista-gamma.vercel.app                              |
+| API                       | https://healthvista-api.onrender.com                              |
+| API health                | https://healthvista-api.onrender.com/api/health                   |
+| GitHub                    | https://github.com/space-rock-0/HealthVista, main                 |
+| Vercel                    | healthvista, Vault, prj_gAQXibTKHzJfgPypDDAY0GJ9cJgS              |
+| Render                    | healthvista-api, srv-dbnmsu95efls73bprpvg, Singapore              |
+| Render workspace          | siddhartha's workspace, tea-dasl1ubncjis73akdhrg                  |
+| Neon                      | healthvista, wild-firefly-68831535, branch br-blue-tooth-b3v6k65c |
+| Upstash Redis             | healthvista, 947da247-33ac-42d0-8b2f-90dcd1d389f2                 |
 
 The user selected Render Free. The API sleeps while idle and background jobs pause
 while it sleeps. No paid API compute plan was created. Migrations run before the
@@ -53,7 +53,7 @@ deployment to become live before verifying the change.
 
 ## Verification completed
 
-- Local typecheck, lint, 289 server tests, 33 client tests and production build passed.
+- Local typecheck, lint, 292 server tests, 33 client tests and production build passed.
 - All 13 Prisma migrations applied; vector support is enabled.
 - HTTPS API/database health returned success.
 - Frontend /, /login and /register returned the SPA; its bundle contains the API origin.
@@ -97,7 +97,7 @@ The full dependency audit CI gate remains unsuccessful until those findings are
 addressed. No audit threshold was weakened. Remaining moderate/high findings also
 need review; this deployment is not a clean security audit.
 
-Twilio delivery, full Stripe checkout/refunds, Cloudinary uploads, and Jina chat or
+Twilio delivery, full Stripe checkout/refunds, Cloudinary uploads, and other AI
 record-processing flows still need representative application-level tests.
 
 ## Provider consoles
@@ -122,18 +122,18 @@ run. All 756 local rows were checked against their deployed counterparts before
 commit. Foreign keys were validated and their original settings restored. The
 existing audit protections stayed enabled.
 
-| Data | Imported local count | Deployed count immediately after import |
-| --- | ---: | ---: |
-| Users | 47 | 49 |
-| Patients | 26 | 27 |
-| Doctors | 9 | 9 |
-| Appointments | 40 | 40 |
-| Bills | 15 | 15 |
-| Lab orders | 31 | 31 |
-| Medical records | 18 | 18 |
-| Prescriptions | 31 | 31 |
-| Medicines | 12 | 12 |
-| Chat messages | 44 | 44 |
+| Data            | Imported local count | Deployed count immediately after import |
+| --------------- | -------------------: | --------------------------------------: |
+| Users           |                   47 |                                      49 |
+| Patients        |                   26 |                                      27 |
+| Doctors         |                    9 |                                       9 |
+| Appointments    |                   40 |                                      40 |
+| Bills           |                   15 |                                      15 |
+| Lab orders      |                   31 |                                      31 |
+| Medical records |                   18 |                                      18 |
+| Prescriptions   |                   31 |                                      31 |
+| Medicines       |                   12 |                                      12 |
+| Chat messages   |                   44 |                                      44 |
 
 Live API checks confirmed the imported lists and hospital settings. Existing
 deployed administrator access, imported doctor/patient passwords and all three
@@ -147,3 +147,26 @@ br-wandering-sunset-b38iwyeu, with no compute endpoint. Private source/target sn
 and verification reports are under the ignored local directory
 .deployment/data-import-2026-11-07T18-52-18-055Z. These backups contain account and test
 data and must stay out of Git and shared artifacts.
+
+## AI assistant repair — 2026-11-08
+
+The existing Jina API key was valid. The provider sent jina-vlm chat requests to
+the Search Foundation host, which rejected that model with HTTP 422. Generation
+now uses https://api-beta-vlm.jina.ai/v1/chat/completions, while embeddings continue
+to use https://api.jina.ai/v1/embeddings. The same server-side key is used for both.
+JSON-only prompting was tightened and regression tests cover endpoint routing and
+rejection of generated programs. Code commit af0a7af became live in Render deploy
+dep-dbnnguqvcj2c738kd0bg.
+
+The imported source records also had no document_chunks search index. Backfill
+created 114 chunks from all eight published knowledge-base articles and 106 eligible
+patient sources: 30 signed consultation notes, 31 issued prescriptions, 27 verified
+lab reports and 18 extracted medical records. The existing pipeline strips PII
+before embedding. Source records and account credentials were preserved.
+
+Stale AI answer caches were cleared without clearing sessions or job queues. Live
+knowledge-base requests generated a visiting-hours answer with article citations
+and fallback=false; a repeated request verified the answer cache. A live imported
+patient generated a prescription answer with two citations scoped to their own
+records and fallback=false. Requesting an unrelated patient's records returned 403.
+All 325 local tests, typecheck, lint and the production build passed before deployment.

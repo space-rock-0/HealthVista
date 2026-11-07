@@ -106,3 +106,44 @@ record-processing flows still need representative application-level tests.
 - Render: https://dashboard.render.com/web/srv-dbnmsu95efls73bprpvg.
 - Google OAuth clients: https://console.cloud.google.com/apis/credentials.
 - Stripe test webhooks: https://dashboard.stripe.com/test/webhooks.
+
+## Local test-data import — 2026-11-08
+
+The user requested importing the current local database, with local values taking
+priority on conflicts. A consistent local snapshot containing 756 application rows
+was merged into the deployed database. The deployed-only administrator and test
+patient were retained. There were no overlapping email addresses. Local hospital
+settings replaced the initial deployed settings. Local password hashes, identifiers,
+relationships, clinical records, billing, lab, inventory and chat data were retained.
+The deployed Prisma migration history was preserved.
+
+The import was rehearsed inside a transaction and rolled back before the committed
+run. All 756 local rows were checked against their deployed counterparts before
+commit. Foreign keys were validated and their original settings restored. The
+existing audit protections stayed enabled.
+
+| Data | Imported local count | Deployed count immediately after import |
+| --- | ---: | ---: |
+| Users | 47 | 49 |
+| Patients | 26 | 27 |
+| Doctors | 9 | 9 |
+| Appointments | 40 | 40 |
+| Bills | 15 | 15 |
+| Lab orders | 31 | 31 |
+| Medical records | 18 | 18 |
+| Prescriptions | 31 | 31 |
+| Medicines | 12 | 12 |
+| Chat messages | 44 | 44 |
+
+Live API checks confirmed the imported lists and hospital settings. Existing
+deployed administrator access, imported doctor/patient passwords and all three
+dashboards passed. Derived caches were invalidated without clearing sessions or
+background-job queues. This is a point-in-time import, not continuous local-to-cloud
+synchronization. Cloudinary records retain their existing provider URLs; file bytes
+were not duplicated.
+
+Rollback backup: Neon branch backup-before-local-import-20261108,
+br-wandering-sunset-b38iwyeu, with no compute endpoint. Private source/target snapshots
+and verification reports are under the ignored local directory
+.deployment/data-import-2026-11-07T18-52-18-055Z. These backups contain account and test
+data and must stay out of Git and shared artifacts.

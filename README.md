@@ -1,4 +1,4 @@
-# HealthVista — PERN + AI Hospital Management System
+# HealthVista 
 
 A hospital management application built with PostgreSQL, Express, React and Node.js.
 It brings patient registration, scheduling, clinical records, laboratory workflows,

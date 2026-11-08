@@ -29,11 +29,11 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
-describe("patient login flow accessibility", () => {
-  vi.mock("../hooks/mutations/useAuthMutations", () => ({
-    useLogin: () => ({ mutate: vi.fn(), isPending: false, isError: false, error: null }),
-  }));
+vi.mock("../hooks/mutations/useAuthMutations", () => ({
+  useLogin: () => ({ mutate: vi.fn(), isPending: false, isError: false, error: null }),
+}));
 
+describe("patient login flow accessibility", () => {
   it("has no axe violations", { timeout: 15_000 }, async () => {
     const { default: LoginPage } = await import("./Login");
     const { container } = render(<LoginPage />);
@@ -41,39 +41,39 @@ describe("patient login flow accessibility", () => {
   });
 });
 
-describe("doctor dashboard accessibility", () => {
-  vi.mock("../hooks/queries/useDashboard", () => ({
-    useDashboard: () => ({
-      data: {
-        role: "DOCTOR",
-        kpis: [
-          { key: "todayScheduled", label: "Scheduled today", value: 8 },
-          { key: "todayWaiting", label: "Waiting today", value: 3 },
-          { key: "pendingNotes", label: "Pending notes", value: 2 },
-          { key: "criticalResults", label: "Critical results", value: 1 },
-        ],
-        sections: [
-          {
-            title: "Today's queue",
-            items: [
-              {
-                id: "a1",
-                label: "Ahmed Raza",
-                subtitle: "09:30",
-                meta: "CHECKED_IN",
-                href: "/consultation/a1",
-              },
-            ],
-          },
-        ],
-      },
-      isPending: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
-    }),
-  }));
+vi.mock("../hooks/queries/useDashboard", () => ({
+  useDashboard: () => ({
+    data: {
+      role: "DOCTOR",
+      kpis: [
+        { key: "todayScheduled", label: "Scheduled today", value: 8 },
+        { key: "todayWaiting", label: "Waiting today", value: 3 },
+        { key: "pendingNotes", label: "Pending notes", value: 2 },
+        { key: "criticalResults", label: "Critical results", value: 1 },
+      ],
+      sections: [
+        {
+          title: "Today's queue",
+          items: [
+            {
+              id: "a1",
+              label: "Ahmed Raza",
+              subtitle: "09:30",
+              meta: "CHECKED_IN",
+              href: "/consultation/a1",
+            },
+          ],
+        },
+      ],
+    },
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
 
+describe("doctor dashboard accessibility", () => {
   it("has no axe violations", { timeout: 15_000 }, async () => {
     const { RoleDashboard } = await import("../components/dashboard/RoleDashboard");
     const { container } = render(<RoleDashboard title="Doctor dashboard" />);
@@ -81,22 +81,22 @@ describe("doctor dashboard accessibility", () => {
   });
 });
 
-describe("reception queue display accessibility", () => {
-  vi.mock("../hooks/queries/useAppointments", () => ({
-    useQueue: () => ({
-      data: [
-        {
-          id: "t1",
-          tokenNumber: 3,
-          status: "waiting",
-          appointment: { patient: { fullName: "Fatima Iqbal" } },
-        },
-      ],
-      isLoading: false,
-      isError: false,
-    }),
-  }));
+vi.mock("../hooks/queries/useAppointments", () => ({
+  useQueue: () => ({
+    data: [
+      {
+        id: "t1",
+        tokenNumber: 3,
+        status: "waiting",
+        appointment: { patient: { fullName: "Fatima Iqbal" } },
+      },
+    ],
+    isLoading: false,
+    isError: false,
+  }),
+}));
 
+describe("reception queue display accessibility", () => {
   it("has no axe violations", { timeout: 15_000 }, async () => {
     const { default: QueueDisplay } = await import("./QueueDisplay");
     const { container } = render(<QueueDisplay />);

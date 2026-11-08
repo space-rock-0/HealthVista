@@ -1,4 +1,4 @@
-# HealthVista 
+# HealthVista
 
 A hospital management application built with PostgreSQL, Express, React and Node.js.
 It brings patient registration, scheduling, clinical records, laboratory workflows,
@@ -18,6 +18,10 @@ assistants and permission-scoped semantic search.
 The frontend runs on Vercel, the API on Render, PostgreSQL on Neon, and Redis on
 Upstash. The API uses Render's free plan: it sleeps when idle, so the first request
 can take longer and background jobs pause while it sleeps.
+
+Browser API requests use `/api` on the application domain. Vercel forwards them to
+Render, so sign-in and refresh cookies remain on the same site. Real-time updates
+use HTTP polling through `/socket.io` on the application domain.
 
 The local test dataset was imported on **8 November 2026**. All **756 application
 rows** were verified against the deployed database, including 47 local users,
@@ -172,8 +176,9 @@ handling checks passed.
 
 Visual browser verification, full Stripe checkout/refunds, file uploads and SMS
 delivery still need application-level testing. Google sign-in requires the OAuth
-console settings above. Dependency auditing still reports findings, including
-critical Vitest/Tinypool test-tooling advisories; details are in [DEPLOYMENT.md](DEPLOYMENT.md).
+console settings above. The dependency audit reports zero vulnerabilities after
+the test-tooling upgrade and transitive dependency fixes. CI also runs migrations
+against PostgreSQL with pgvector and uploads server/client coverage reports.
 
 ## Development commands
 

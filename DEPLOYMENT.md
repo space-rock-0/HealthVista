@@ -1,6 +1,6 @@
 # HealthVista deployment
 
-## Status — 2026-11-08
+## Status — 2026-11-09
 
 The frontend and API are deployed. Application source was imported without
 overwriting the deployment preparation history. Local secrets, dependencies,
@@ -36,8 +36,8 @@ TCP health check; /api/health was verified separately over HTTPS.
 - Render build: npm ci && npm run build -w packages/shared && npm run build -w apps/server.
 - Render start: npm run db:deploy && exec node apps/server/dist/server.js.
 - Both providers deploy source updates from main automatically.
-- VITE_API_URL: https://healthvista-api.onrender.com/api.
-- VITE_SOCKET_URL: https://healthvista-api.onrender.com.
+- VITE_API_URL: /api, forwarded by Vercel to the Render API.
+- VITE_SOCKET_URL: empty, using the application origin and proxied HTTP polling.
 - CLIENT_URL: https://healthvista-vault-cf00.vercel.app.
 - CORS_ORIGINS also allows https://healthvista-gamma.vercel.app.
 - DATABASE_URL uses Neon's pooled endpoint; DIRECT_URL uses its direct endpoint.
@@ -93,9 +93,11 @@ users, then test a complete Google sign-in. GOOGLE_CALLBACK_URL is already confi
 
 Compatible security updates reduced npm audit findings from 35 to 12. Two critical
 findings remain in Vitest/Tinypool test tooling; npm proposes a major Vitest upgrade.
-The full dependency audit CI gate remains unsuccessful until those findings are
-addressed. No audit threshold was weakened. Remaining moderate/high findings also
-need review; this deployment is not a clean security audit.
+These historical findings were resolved on 2026-11-09: Vitest and its coverage
+provider were upgraded to 5.1.0, Prisma's merge dependency was patched, and the
+shadcn CLI dependency was removed while its exact CSS and MIT license were retained
+locally. The current audit reports zero vulnerabilities. CI now blocks high and
+critical findings rather than only critical findings.
 
 Twilio delivery, full Stripe checkout/refunds, Cloudinary uploads, and other AI
 record-processing flows still need representative application-level tests.

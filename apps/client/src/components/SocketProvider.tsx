@@ -60,9 +60,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
      * Reconnection matters just as much here: Render idles free instances, so
      * the first connection after a spin-down will fail and must be retried.
      */
+    const origin: string = import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, "");
+    // Vercel forwards HTTP polling to the API, but does not proxy WebSocket upgrades.
+    const usesSiteProxy = !origin || origin === window.location.origin;
     const opts = {
       auth: { token },
-      transports: ["polling", "websocket"],
+      transports: usesSiteProxy ? ["polling"] : ["polling", "websocket"],
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 10,
@@ -70,9 +73,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       reconnectionDelayMax: 10000,
       timeout: 20000,
     };
-    const origin: string =
-      import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, "");
-
     const aptSocket = io(`${origin}/appointments`, opts);
     setAppointmentSocket(aptSocket);
 

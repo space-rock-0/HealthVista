@@ -2,11 +2,11 @@ import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 
 /** Exported so full-page redirects (OAuth) resolve the API the same way. */
-export const API_URL: string =
-  import.meta.env.VITE_API_URL || "/api";
+export const API_URL: string = import.meta.env.VITE_API_URL || "/api";
 
 const axiosClient = axios.create({
   baseURL: API_URL,
+  timeout: 120000,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
@@ -32,6 +32,7 @@ axiosClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    if (!original) return Promise.reject(error);
     const isAuthAttempt = /\/auth\/(login|register)$/.test(original.url || "");
     if (error.response?.status === 401 && !original._retry && !isAuthAttempt) {
       if (isRefreshing) {
@@ -45,7 +46,11 @@ axiosClient.interceptors.response.use(
       original._retry = true;
       isRefreshing = true;
       try {
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        const { data } = await axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true, timeout: 120000 },
+        );
         const newToken = data.data.accessToken;
         useAuthStore.getState().setAccessToken(newToken);
         processQueue(null, newToken);
@@ -53,7 +58,7 @@ axiosClient.interceptors.response.use(
         return axiosClient(original);
       } catch (err) {
         processQueue(err, null);
-        localStorage.removeItem("accessToken");
+        useAuthStore.getState().logout();
         window.location.href = "/login";
         return Promise.reject(err);
       } finally {

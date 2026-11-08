@@ -21,12 +21,18 @@
     "db:studio": "npm run db:studio -w apps/server",
     "db:seed": "npm run db:seed -w apps/server",
     "db:embed": "npm run db:embed -w apps/server",
-    "db:reset": "npm run db:reset -w apps/server"
+    "db:reset": "npm run db:reset -w apps/server",
+    "test:server": "vitest run",
+    "format:check": "node scripts/check-format.mjs"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "5.1.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "5.1.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.0"
   }
 }

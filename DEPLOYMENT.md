@@ -11,7 +11,7 @@ build output and deployment tooling remain excluded from Git.
 | Frontend                  | https://healthvista-vault-cf00.vercel.app                         |
 | Additional frontend alias | https://healthvista-gamma.vercel.app                              |
 | API                       | https://healthvista-api.onrender.com                              |
-| API health                | https://healthvista-api.onrender.com/api/health                   |
+| API health through site   | https://healthvista-vault-cf00.vercel.app/api/health              |
 | GitHub                    | https://github.com/space-rock-0/HealthVista, main                 |
 | Vercel                    | healthvista, Vault, prj_gAQXibTKHzJfgPypDDAY0GJ9cJgS              |
 | Render                    | healthvista-api, srv-dbnmsu95efls73bprpvg, Singapore              |
@@ -56,7 +56,7 @@ deployment to become live before verifying the change.
 - Local typecheck, lint, 292 server tests, 33 client tests and production build passed.
 - All 13 Prisma migrations applied; vector support is enabled.
 - HTTPS API/database health returned success.
-- Frontend /, /login and /register returned the SPA; its bundle contains the API origin.
+- Frontend /, /login and /register returned the SPA; production API requests use the same-origin /api proxy.
 - Credentialed CORS permits the primary frontend and excludes an untrusted origin.
 - A disposable patient verified registration, login, profile retrieval, secure
   refresh cookies, session refresh, authenticated Socket.io and logout.
@@ -69,9 +69,14 @@ deployment to become live before verifying the change.
   payment_intent.succeeded, payment_intent.payment_failed and charge.refunded.
 - Unsigned webhook requests returned 400; signed verification events and duplicate
   replay returned 200. Full checkout/payment flows were not exercised.
-- Browser automation could not start because its trusted Node runtime exited.
-  Verification used HTTP/API calls; visual rendering and browser cookie behavior
-  have not been confirmed.
+- Headless Edge verified production administrator login, profile retrieval, a secure
+  HttpOnly first-party refresh cookie, token refresh and persistence after reload.
+  The dashboard rendered the imported data (49 users and 12 departments), with
+  healthy database and cache indicators and no browser script or API failures.
+- Both frontend aliases returned successful API/database health through /api/health.
+- All seven GitHub CI jobs passed for application commit 20dee3a, including server
+  and client coverage, Prisma checks, dependency audit and secret scanning:
+  https://github.com/space-rock-0/HealthVista/actions/runs/42517054709.
 
 The application demo seed was not run. Administrator credentials are not stored in
 this document or Git. Change the supplied demo password in account settings before

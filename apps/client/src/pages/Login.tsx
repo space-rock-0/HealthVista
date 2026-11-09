@@ -26,12 +26,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-teal-50/70 to-cyan-100">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-teal-50/70 to-cyan-100 dark:from-background dark:via-background dark:to-muted">
+      <div className="bg-card text-card-foreground p-8 rounded-xl shadow-2xl w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
-          <HeartPulse className="w-12 h-12 text-teal-600 mb-2" />
-          <h1 className="text-3xl font-bold text-teal-800">{t("common:appName")}</h1>
-          <p className="text-teal-600 text-sm mt-1">{t("common:tagline")}</p>
+          <HeartPulse className="w-12 h-12 text-primary mb-2" />
+          <h1 className="text-3xl font-bold text-primary">{t("common:appName")}</h1>
+          <p className="text-primary text-sm mt-1">{t("common:tagline")}</p>
         </div>
 
         {oauthError && (
@@ -42,12 +42,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               {t("auth:email")}
             </label>
             <input
               type="email"
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+              className="bg-background text-foreground placeholder:text-muted-foreground w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-transparent"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -55,12 +55,12 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               {t("auth:password")}
             </label>
             <input
               type="password"
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+              className="bg-background text-foreground placeholder:text-muted-foreground w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-transparent"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -100,20 +100,22 @@ export default function LoginPage() {
               className="absolute inset-x-0 top-1/2 border-t border-gray-200"
               aria-hidden="true"
             />
-            <span className="relative bg-white px-3 text-xs text-gray-400">
+            <span className="relative bg-card text-card-foreground px-3 text-xs text-muted-foreground">
               {t("auth:patientsCanAlso")}
             </span>
           </div>
 
           <a
             href={GOOGLE_AUTH_URL}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-3 font-medium text-foreground transition hover:bg-muted"
           >
             <GoogleMark />
             {t("auth:continueWithGoogle")}
           </a>
 
-          <p className="mt-3 text-center text-xs text-gray-400">{t("auth:staffUseCredentials")}</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {t("auth:staffUseCredentials")}
+          </p>
         </div>
       </div>
     </div>

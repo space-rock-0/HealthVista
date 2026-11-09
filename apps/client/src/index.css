@@ -260,3 +260,28 @@
     border-radius: 2px;
   }
 }
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  input,
+  textarea,
+  select {
+    background-color: var(--background);
+    color: var(--foreground);
+    caret-color: var(--foreground);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+  option {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
